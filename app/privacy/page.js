@@ -2,7 +2,6 @@
 import { useRouter } from 'next/navigation';
 import { useVitality } from '../context/VitalityContext';
 import SafeWalkMode from '../components/features/SafeWalkMode';
-import BottomBar from '../components/BottomBar';
 import Icon from '../components/Icon';
 
 export default function PrivacyPage() {
@@ -171,7 +170,6 @@ export default function PrivacyPage() {
         </div>
       </section>
 
-      <BottomBar />
     </main>
   );
 }

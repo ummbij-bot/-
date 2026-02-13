@@ -2,9 +2,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db, googleProvider } from '../lib/firebase';
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signInAnonymously, signOut } from 'firebase/auth';
+import { doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, limit, serverTimestamp } from 'firebase/firestore';
 import { getTranslation } from '../lib/i18n';
+import { StepCounter } from '../../lib/sensors/stepCounter';
+import { fetchWeather } from '../../lib/api/weatherService';
+import { GeoFenceManager } from '../../lib/sensors/geoFence';
 
 const VitalityContext = createContext();
 
@@ -17,13 +20,60 @@ export const VitalityProvider = ({ children }) => {
   const [isPremium, setIsPremium] = useState(false);
   const [familyMessage, setFamilyMessage] = useState('가족의 응원을 기다리는 중입니다 💖');
   const [language, setLanguage] = useState('ko');
+  const [weatherData, setWeatherData] = useState({
+    temp: 20,
+    conditionKr: '로딩 중...',
+    fineDustStatus: '좋음',
+    icon: '☁️'
+  });
 
-  // 1. Auth State Tracking
+  // [Phase 3.0] Accessibility Settings
+  const [accessibility, setAccessibility] = useState({
+    visionLevel: 1, // 1: 보통, 2: 약시(큰 글씨), 3: 고대비(최대 크기)
+    textSize: 'base', // base, lg, xl, 2xl
+    highContrast: false
+  });
+
+  // [Phase 5.0] Wearable Integration Settings
+  const [wearableStatus, setWearableStatus] = useState({
+    status: 'disconnected', // 'connected', 'disconnected', 'syncing'
+    deviceName: null,
+    battery: null,
+    lastSync: null
+  });
+
+  // [Phase 6.0] Family Feed & Messages
+  const [familyMessages, setFamilyMessages] = useState([]);
+
+  // 1. Load Settings from localStorage
   useEffect(() => {
+    const savedAccess = localStorage.getItem('gw_accessibility');
+    if (savedAccess) setAccessibility(JSON.parse(savedAccess));
+
+    const savedWearable = localStorage.getItem('gw_wearable');
+    if (savedWearable) setWearableStatus(JSON.parse(savedWearable));
+  }, []);
+
+  // 2. Save Settings to localStorage
+  useEffect(() => {
+    localStorage.setItem('gw_accessibility', JSON.stringify(accessibility));
+  }, [accessibility]);
+
+  useEffect(() => {
+    localStorage.setItem('gw_wearable', JSON.stringify(wearableStatus));
+  }, [wearableStatus]);
+
+  // 3. Auth State Tracking
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) console.log('✅ Redirect login successful:', result.user.email);
+      })
+      .catch((error) => console.error('❌ Redirect login failed:', error));
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (!currentUser) {
-        // Reset state if logged out
         setSteps(0);
         setPoints(0);
         setIsPremium(false);
@@ -33,13 +83,11 @@ export const VitalityProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // 2. Real-time Firestore Sync (Steps & Points)
+  // 4. Real-time Firestore Sync (User Data)
   useEffect(() => {
     if (!user) return;
 
     const userDocRef = doc(db, 'users', user.uid);
-    
-    // Subscribe to user document changes
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -48,13 +96,12 @@ export const VitalityProvider = ({ children }) => {
         setIsPremium(data.isPremium || false);
         if (data.familyMessage) setFamilyMessage(data.familyMessage);
       } else {
-        // Initialize new user document
         setDoc(userDocRef, {
           email: user.email,
           steps: 0,
-          points: 100, // Welcome points
+          points: 100,
           isPremium: false,
-          createdAt: new Date().toISOString()
+          createdAt: serverTimestamp()
         });
       }
     });
@@ -62,152 +109,222 @@ export const VitalityProvider = ({ children }) => {
     return () => unsubscribe();
   }, [user]);
 
-  // 3. Step Simulator (Web Worker - Background Task)
+  // 5. Family Messages Listener (Phase 6.0)
   useEffect(() => {
     if (!user) return;
+    
+    const q = query(
+      collection(db, 'family_messages'),
+      where('targetUserId', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+      limit(5)
+    );
 
-    // Use Web Worker if available
-    if (window.Worker) {
-      const stepWorker = new Worker(new URL('../workers/stepWorker.js', import.meta.url));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate()?.toISOString()
+      }));
+      setFamilyMessages(msgs);
+      if (msgs.length > 0) setFamilyMessage(msgs[0].content);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // 3. Real-time Weather & GeoFence Sync (Phase 7.0)
+  useEffect(() => {
+    let geoManager = null;
+    
+    // 위험 구역 진입 시 음성 안내
+    const handleEntry = (zone) => {
+      console.log('🚨 User entered risk zone:', zone.name);
+      if ('speechSynthesis' in window) {
+        const msg = new SpeechSynthesisUtterance(zone.msg);
+        const langMap = { ko: 'ko-KR', ja: 'ja-JP', en: 'en-US', zh: 'zh-CN' };
+        msg.lang = langMap[language] || 'ko-KR';
+        window.speechSynthesis.speak(msg);
+      }
+    };
+
+    geoManager = new GeoFenceManager(handleEntry);
+
+    const updateContext = async () => {
+      if (typeof window === 'undefined' || !navigator.geolocation) return;
       
-      stepWorker.postMessage('start');
-      
-      stepWorker.onmessage = async (e) => {
-        if (e.data.type === 'STEP_UPDATE') {
-          const increment = e.data.steps;
-          
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        // Update Weather
+        const weather = await fetchWeather(latitude, longitude);
+        if (weather) setWeatherData(weather);
+        
+        // Check GeoFence
+        geoManager.checkProximity(latitude, longitude);
+        
+      }, (error) => {
+        console.warn('📍 Geolocation not available');
+      });
+    };
+
+    updateContext();
+    const interval = setInterval(updateContext, 60000); // 1 min for performance
+    return () => clearInterval(interval);
+  }, [language]);
+
+  // 6. Step Counter (Real Sensor!)
+  useEffect(() => {
+    if (!user) return;
+    let stepCounter = null;
+
+    const startStepCounter = async () => {
+      if (!StepCounter.isSupported()) return;
+      try {
+        stepCounter = new StepCounter(() => {
           setSteps(prev => {
-            const newSteps = prev + increment;
-            
-            // Sync with Firestore (Optimized: only if divisible by 50 to reduce writes)
+            const newSteps = prev + 1;
             if (newSteps % 50 === 0) {
               const userDocRef = doc(db, 'users', user.uid);
-              setDoc(userDocRef, { 
+              updateDoc(userDocRef, { 
                 steps: newSteps,
-                points: points + (Math.floor(newSteps / 100) > Math.floor(prev / 100) ? 10 : 0) // Point logic needs state access, simplified here
-              }, { merge: true });
+                lastUpdated: serverTimestamp()
+              });
             }
             return newSteps;
           });
-        }
-      };
+        });
+        await stepCounter.start();
+      } catch (e) {
+        console.error('❌ Step counter failed:', e);
+      }
+    };
 
-      return () => stepWorker.terminate();
-    } else {
-      // Fallback for no-worker environments
-      const interval = setInterval(() => {
-        setSteps(prev => prev + 5);
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [user]); // Removed steps/points dependency to avoid re-creating worker
+    startStepCounter();
+    return () => { if (stepCounter) stepCounter.stop(); };
+  }, [user]);
 
-  // 4. Social & AI Features (Phase 14)
-  useEffect(() => {
-    if (!user) return;
-    
-    // Rotation of family messages to simulate active connection
-    const messageInterval = setInterval(() => {
-      const messages = familyMessages[language] || familyMessages['ko'];
-      const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-      setFamilyMessage(randomMsg);
-    }, 15000);
-
-    return () => messageInterval(messageInterval);
-  }, [user, language]);
-
-  const triggerVoiceCoach = (type) => {
-    if (!isPremium) return;
-
-    // [Phase 16] Real Text-to-Speech Implementation
-    const voiceMsg = language === 'ko' 
-      ? `어르신, 현재 ${steps}보를 걷고 계시네요! 목표까지 얼마 남지 않았어요. 허리는 곧게 펴시고, 호흡을 깊게 내쉬어 보세요. 사랑하는 가족들이 응원하고 있습니다!`
-      : `おじいちゃん、今${steps}歩歩いていますね！ 目標までもう少しです。腰をまっすぐに伸ばして、深呼吸してみてください。家族みんなが応援しています！`;
-    
-    // Check browser support
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(voiceMsg);
-      utterance.lang = language === 'ko' ? 'ko-KR' : 'ja-JP';
-      utterance.rate = 0.9; // Slightly slower for seniors
-      utterance.pitch = 1.1; // Friendly tone
-      window.speechSynthesis.speak(utterance);
-      
-      console.log('🔊 AI Voice Playing:', voiceMsg);
-    } else {
-      alert(`[AI Voice] ${voiceMsg}`);
-    }
-  };
-
-  // 5. Premium Upgrade (PayPal Simulation)
-  const upgradeToPremium = async () => {
-    if (!user) return;
-    const userDocRef = doc(db, 'users', user.uid);
-    await setDoc(userDocRef, { isPremium: true }, { merge: true });
-    setIsPremium(true);
-  };
-
-  // 5. Auth Actions
-  const login = async () => {
+  // Actions
+  const login = async (method = 'redirect') => {
     try {
-        await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-        console.error("Firebase Login Failed, Using Mock User", error);
-        // Fallback to Mock User for Demo/Rehearsal
-        const mockUser = {
-            uid: 'mock-senior-12345',
-            displayName: '김마실',
-            email: 'senior@goldenwalk.com',
-            photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
-        };
-        setUser(mockUser);
-        setSteps(5432); // Demo initial steps
-        setPoints(1250); // Demo points
-        setIsPremium(true); // Demo premium
-    }
+      if (method === 'redirect') await signInWithRedirect(auth, googleProvider);
+      else if (method === 'anonymous') await signInAnonymously(auth);
+      else if (method === 'popup') await signInWithPopup(auth, googleProvider);
+    } catch (e) { throw e; }
   };
-  const logout = () => {
-      signOut(auth).catch(() => setUser(null));
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
       setUser(null);
+    } catch (e) { setUser(null); }
   };
+
+  const addSteps = async (amount = 100) => {
+    if (!user) return;
+    const newSteps = steps + amount;
+    const pointsToAdd = Math.floor(newSteps / 100) * 10 - Math.floor(steps / 100) * 10;
+    setSteps(newSteps);
+    setPoints(prev => prev + pointsToAdd);
+    const userDocRef = doc(db, 'users', user.uid);
+    await updateDoc(userDocRef, { 
+      steps: newSteps, 
+      points: points + pointsToAdd,
+      lastUpdated: serverTimestamp()
+    });
+  };
+
+  const addPoints = async (amount) => {
+    if (!user) return;
+    const newPoints = points + amount;
+    setPoints(newPoints);
+    const userDocRef = doc(db, 'users', user.uid);
+    await updateDoc(userDocRef, { points: newPoints });
+  };
+
+  const syncWearableData = (data) => {
+    setWearableStatus(prev => ({ ...prev, ...data, lastSync: new Date().toISOString() }));
+  };
+
+  const saveSnapLog = async (snapData) => {
+    if (!user) return null;
+    try {
+      const docRef = await addDoc(collection(db, 'snap_logs'), {
+        userId: user.uid,
+        userName: user.displayName,
+        imageUrl: snapData.imageUrl,
+        emotion: snapData.emotion,
+        vitalityScore: snapData.vitalityScore,
+        metrics: snapData.metrics || {},
+        aiComment: snapData.aiComment,
+        createdAt: serverTimestamp(),
+      });
+      return docRef.id;
+    } catch (e) { return null; }
+  };
+
+  const saveGaitLog = async (logData) => {
+    if (!user) return null;
+    try {
+      const docRef = await addDoc(collection(db, 'gait_logs'), {
+        userId: user.uid,
+        ...logData,
+        createdAt: serverTimestamp(),
+      });
+      return docRef.id;
+    } catch (e) { return null; }
+  };
+
+  const [healthForecast, setHealthForecast] = useState({
+    expectedScore: 75,
+    advice: '마실을 시작해 볼까요?',
+    predictedAge: 70
+  });
+
+  // [Phase 10.0] Family Group State
+  const [familyVitals, setFamilyVitals] = useState([]);
+
+  // [Phase 10.0] Listen to Family Vitals
+  useEffect(() => {
+    let unsubscribe = null;
+    if (user?.familyId) {
+      import('../../lib/api/familyService').then(({ listenFamilyVitals }) => {
+        unsubscribe = listenFamilyVitals(user.familyId, (data) => {
+          setFamilyVitals(data);
+        });
+      });
+    }
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [user?.familyId]);
+
+  useEffect(() => {
+    if (!user || steps === 0) return;
+    import('../../lib/api/aiService').then(({ predictFutureVitality }) => {
+      const mockHistory = [
+        { steps: Math.max(0, steps - 1000) },
+        { steps: Math.max(0, steps - 500) },
+        { steps: steps }
+      ];
+      setHealthForecast(predictFutureVitality(mockHistory));
+    });
+  }, [user, steps]);
+
+  const t = (key) => getTranslation(language, key);
 
   const value = {
-    user,
-    loading,
-    steps,
-    goal,
-    points,
+    user, loading, steps, goal,    points,
+    weatherData,
     isPremium,
-    familyMessage,
-    language,
-    setLanguage,
-    upgradeToPremium,
-    triggerVoiceCoach,
-    login,
-    logout,
-    // [Phase 16] Haptic Feedback
-    triggerHaptic: () => {
-      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(50); // Light tap
-      }
-    },
-    // [Phase 9] Global Dictionary
-    t: (key) => {
-        const dictionary = {
-            greeting: { ko: '안녕하세요', en: 'Hello', ja: 'こんにちは', zh: '你好', es: 'Hola', fr: 'Bonjour', de: 'Hallo', it: 'Ciao', ru: 'Привет', vi: 'Xin chào' },
-            cheer: { ko: '오늘도 활기찬 하루 되세요!', en: 'Have a great day!', ja: '今日も元気な一日を！', zh: '祝你今天过得愉快！', es: '¡Que tengas un gran día!', fr: 'Passez une bonne journée!', de: 'Einen schönen Tag noch!', it: 'Buona giornata!', ru: 'Хорошего дня!', vi: 'Chúc một ngày tốt lành!' },
-            steps: { ko: '걸음 수', en: 'Steps', ja: '歩数', zh: '步数', es: 'Pasos', fr: 'Pas', de: 'Schritte', it: 'Passi', ru: 'Шаги', vi: 'Bước' },
-            points: { ko: '포인트', en: 'Points', ja: 'ポイント', zh: '积分', es: 'Puntos', fr: 'Points', de: 'Punkte', it: 'Punti', ru: 'Очки', vi: 'Điểm' },
-        };
-        return dictionary[key]?.[language] || dictionary[key]?.['ko'] || key;
-    },
-    // [Phase 17] Add Points
-    addPoints: async (amount) => {
-      if (!user) return;
-      const newPoints = points + amount;
-      setPoints(newPoints);
-      const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, { points: newPoints }, { merge: true });
-    }
+    familyMessage, familyMessages, language, setLanguage,
+    accessibility, 
+    updateAccessibility: (settings) => setAccessibility(prev => ({ ...prev, ...settings })),
+    login, logout, addSteps, addPoints, 
+    wearableStatus, 
+    healthForecast, // Added for Phase 9.0
+    familyVitals,   // Added for Phase 10.0
+    t
   };
 
   return <VitalityContext.Provider value={value}>{children}</VitalityContext.Provider>;

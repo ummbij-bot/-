@@ -1,7 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useVitality } from '../context/VitalityContext';
-import BottomBar from '../components/BottomBar';
 import Icon from '../components/Icon';
 
 export default function RecommendPage() {
@@ -151,7 +150,6 @@ export default function RecommendPage() {
         ))}
       </section>
 
-      <BottomBar />
     </main>
   );
 }

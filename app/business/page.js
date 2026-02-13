@@ -1,90 +1,134 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import Icon from '../components/Icon';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-export default function BusinessPage() {
-  const router = useRouter();
+/**
+ * [Phase 4.0] BusinessDashboard
+ * 지자체 및 보험사용 보행 데이터 분석 플랫폼입니다. (B2B 데이터 비즈니스 모델)
+ */
+export default function BusinessDashboard() {
+  const [activeTab, setActiveTab] = useState('safety'); // safety, health, economic
+
+  // 가상의 보행 위험 지역 데이터 (히트맵 컨셉)
+  const riskZoneData = [
+    { name: '강남구청 인근', riskScore: 85, danger: '낙상 주의' },
+    { name: '대치동 은마아파트', riskScore: 42, danger: '양호' },
+    { name: '강남역 10번 출구', riskScore: 78, danger: '경사 주의' },
+    { name: '양재천 산책로', riskScore: 12, danger: '매우 안전' },
+    { name: '논현동 가구거리', riskScore: 65, danger: '보도블록 노후' },
+  ];
+
+  // 연령대별 보행 안정성 추이
+  const trendData = [
+    { month: '10월', age60: 82, age70: 75, age80: 62 },
+    { month: '11월', age60: 80, age70: 72, age80: 58 },
+    { month: '12월', age60: 78, age70: 68, age80: 52 },
+    { month: '1월', age60: 85, age70: 70, age80: 55 },
+    { month: '2월', age60: 88, age70: 72, age80: 57 },
+  ];
 
   return (
-    <main className="min-h-screen bg-gray-900 text-white">
-       <header className="flex justify-between items-center p-6 border-b border-gray-800">
-           <h1 className="text-xl font-bold bg-gradient-to-r from-gold-400 to-yellow-200 bg-clip-text text-transparent">
-               GoldenWalk Data Lab
-           </h1>
-           <button onClick={() => router.back()} className="text-gray-400 hover:text-white">✕ 닫기</button>
-       </header>
+    <main className="bg-slate-900 min-h-screen text-slate-300 p-6">
+      <header className="mb-10 flex justify-between items-end border-b border-slate-800 pb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2 text-blue-400 font-bold uppercase tracking-widest text-xs">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            GoldenWalk Business Intelligence
+          </div>
+          <h1 className="text-3xl font-black text-white italic">데이터 통합 관제 센터</h1>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-slate-500 uppercase font-bold">Authenticated Partner</p>
+          <p className="text-slate-200 font-bold">서울특별시 강남구청 님</p>
+        </div>
+      </header>
 
-       <div className="max-w-4xl mx-auto p-8">
-           <div className="text-center mb-16">
-               <span className="bg-blue-900 text-blue-300 px-3 py-1 rounded-full text-xs font-bold tracking-wider mb-4 inline-block">
-                   B2B SOLUTION
-               </span>
-               <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
-                   도시를 걷는 <br/>
-                   <span className="text-gold-400">데이터가 되다</span>
-               </h2>
-               <p className="text-gray-400 max-w-lg mx-auto leading-relaxed">
-                   골든워커들이 수집한 휠체어/유모차 이동 가능 경로 데이터.
-                   <br/>스마트 시티 설계를 위한 가장 정밀한 보행 데이터를 제공합니다.
-               </p>
-           </div>
+      {/* 대시보드 그리드 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* 지역별 보행 위험 지수 (히트맵 대체 리스트) */}
+        <div className="lg:col-span-1 bg-slate-800/50 rounded-3xl p-6 border border-slate-800">
+          <h3 className="text-white font-bold mb-6 flex items-center gap-2">
+            <Icon name="Map" size={20} color="var(--primary)" /> 집중 관리 구역 TOP 5
+          </h3>
+          <div className="space-y-4">
+            {riskZoneData.sort((a, b) => b.riskScore - a.riskScore).map((zone, i) => (
+              <div key={i} className="flex items-center gap-4 group">
+                <div className={`w-10 h-10 rounded-xl flex-center font-bold ${
+                  zone.riskScore > 70 ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'
+                }`}>
+                  {zone.riskScore}
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-bold text-sm">{zone.name}</p>
+                  <p className="text-xs text-slate-500">{zone.danger}</p>
+                </div>
+                <div className="w-20 h-1 bg-slate-700 rounded-full overflow-hidden">
+                  <div className={`h-full ${zone.riskScore > 70 ? 'bg-red-500' : 'bg-green-500'}`} 
+                       style={{ width: `${zone.riskScore}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <button className="w-full mt-8 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold transition-colors">
+            위험 구역 상세 리포트 다운로드
+          </button>
+        </div>
 
-           {/* Heatmap Visualization */}
-           <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-gray-700 aspect-[16/9] mb-12 group">
-               <img 
-                   src="https://upload.wikimedia.org/wikipedia/commons/b/bd/Google_Maps_Satellite_view_of_the_Earth.jpg" 
-                   alt="Map Data" 
-                   className="w-full h-full object-cover opacity-30 grayscale group-hover:grayscale-0 transition-all duration-700"
-               />
-               <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
-               
-               {/* Data Points Simulation */}
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 flex items-center justify-center">
-                   <div className="w-full h-full relative">
-                        {[...Array(20)].map((_, i) => (
-                            <div 
-                                key={i}
-                                className="absolute w-2 h-2 bg-gold-400 rounded-full shadow-[0_0_10px_2px_rgba(255,215,0,0.6)] animate-pulse"
-                                style={{ 
-                                    top: `${Math.random() * 100}%`, 
-                                    left: `${Math.random() * 100}%`,
-                                    animationDelay: `${Math.random() * 2}s`
-                                }}
-                            ></div>
-                        ))}
-                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-60">
-                             <path d="M50,200 Q150,50 300,100 T500,200" fill="none" stroke="#FFD700" strokeWidth="2" strokeDasharray="5 5" className="animate-[dash_20s_linear_infinite]" />
-                        </svg>
-                   </div>
-               </div>
+        {/* 보행 안정성 추이 그래프 */}
+        <div className="lg:col-span-2 bg-slate-800/50 rounded-3xl p-6 border border-slate-800">
+          <div className="flex-between mb-8">
+            <h3 className="text-white font-bold uppercase tracking-tighter">연령대별 보행 안정성 추이</h3>
+            <div className="flex gap-2">
+               <div className="flex items-center gap-1 text-[10px]"><div className="w-2 h-2 bg-blue-500 rounded-full"></div> 60대</div>
+               <div className="flex items-center gap-1 text-[10px]"><div className="w-2 h-2 bg-indigo-500 rounded-full"></div> 70대</div>
+               <div className="flex items-center gap-1 text-[10px]"><div className="w-2 h-2 bg-purple-500 rounded-full"></div> 80대</div>
+            </div>
+          </div>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="color60" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" vertical={false} />
+                <XAxis dataKey="month" stroke="#718096" fontSize={12} axisLine={false} tickLine={false} />
+                <YAxis hide />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a202c', border: 'none', borderRadius: '12px' }}
+                  itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                />
+                <Area type="monotone" dataKey="age60" stroke="#3b82f6" fillOpacity={1} fill="url(#color60)" strokeWidth={3} />
+                <Area type="monotone" dataKey="age70" stroke="#6366f1" fillOpacity={0} strokeWidth={3} />
+                <Area type="monotone" dataKey="age80" stroke="#a855f7" fillOpacity={0} strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-6 p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20 text-xs text-blue-400 italic">
+            💡 분석 결과: 동절기(12-1월) 80대 연령층의 보행 안정성이 평소보다 15% 하락했습니다. 해당 기간 집중 낙상 방지 캠페인을 제안합니다.
+          </div>
+        </div>
 
-               <div className="absolute bottom-6 left-6">
-                   <p className="text-xs text-gold-400 font-mono mb-1">● ACCESSIBLE ROUTE DATA</p>
-                   <h3 className="text-2xl font-bold">Jongno-gu, Seoul</h3>
-               </div>
-           </div>
+      </div>
 
-           <div className="grid md:grid-cols-3 gap-6">
-               <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 hover:border-gold-500/30 transition-colors">
-                   <h4 className="font-bold text-lg mb-2">Barrier-Free Map</h4>
-                   <p className="text-sm text-gray-400">보행 약자를 위한 최적 경로 안내 데이터 API</p>
-               </div>
-               <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 hover:border-gold-500/30 transition-colors">
-                   <h4 className="font-bold text-lg mb-2">Foot Traffic Heatmap</h4>
-                   <p className="text-sm text-gray-400">시간대별 유동 인구 및 상권 분석 데이터</p>
-               </div>
-               <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 hover:border-gold-500/30 transition-colors">
-                   <h4 className="font-bold text-lg mb-2">Safety Hazard Index</h4>
-                   <p className="text-sm text-gray-400">낙상 사고 다발 구역 및 위험물 데이터</p>
-               </div>
-           </div>
-
-           <div className="mt-16 text-center">
-               <button className="bg-gold-500 hover:bg-gold-600 text-black font-bold text-lg px-8 py-4 rounded-xl shadow-lg transform transition active:scale-95">
-                   제휴 및 데이터 구매 문의
-               </button>
-           </div>
-       </div>
+      {/* 비즈니스 연동 섹션 */}
+      <footer className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-6 bg-gradient-to-br from-indigo-900 to-slate-900 rounded-3xl border border-indigo-500/30">
+          <h4 className="text-white font-bold mb-2">지자체 정비 사업 연동</h4>
+          <p className="text-sm text-slate-400 mb-4">보행 약자 다빈도 경로 데이터를 기반으로 무장애(Barrier-free) 도로 정비 구역 우선순위를 추천받으세요.</p>
+          <button className="px-6 py-2 bg-indigo-500 text-white rounded-full text-xs font-bold hover:bg-indigo-400 transition-all">API 문서 보기</button>
+        </div>
+        <div className="p-6 bg-gradient-to-br from-purple-900 to-slate-900 rounded-3xl border border-purple-500/30">
+          <h4 className="text-white font-bold mb-2">보험사 가입자 모니터링</h4>
+          <p className="text-sm text-slate-400 mb-4">가입자의 보행 패턴 변화를 감지하여 건강 증진 리워드 및 질병 예방 서비스를 자동화합니다.</p>
+          <button className="px-6 py-2 bg-purple-500 text-white rounded-full text-xs font-bold hover:bg-purple-400 transition-all">데이터 대시보드 Pro 신청</button>
+        </div>
+      </footer>
     </main>
   );
 }

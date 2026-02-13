@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVitality } from '../context/VitalityContext';
-import BottomBar from '../components/BottomBar';
 
 export default function LifePage() {
   const { user, language, t } = useVitality();
@@ -89,7 +88,6 @@ export default function LifePage() {
         ))}
       </section>
 
-      <BottomBar />
     </main>
   );
 }

@@ -2,7 +2,6 @@
 import { useRouter } from 'next/navigation';
 import { useVitality } from '../context/VitalityContext';
 import FeedbackForm from '../components/FeedbackForm';
-import BottomBar from '../components/BottomBar';
 import Icon from '../components/Icon';
 
 export default function FeedbackPage() {
@@ -79,7 +78,6 @@ export default function FeedbackPage() {
         </div>
       </section>
 
-      <BottomBar />
     </main>
   );
 }

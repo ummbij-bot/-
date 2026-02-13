@@ -1,125 +1,166 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+  import GaitAnalyzer from '../../lib/sensors/GaitAnalyzer';
+  import { useVitality } from '../context/VitalityContext';
+  import { toast } from 'react-hot-toast';
 
-/**
- * GaitAnalysis Page
- * Simulates real-time gait pattern analysis using mock sensor data.
- */
-export default function GaitAnalysis() {
-  const router = useRouter();
-  const [analyzing, setAnalyzing] = useState(true);
-  const [stepWidth, setStepWidth] = useState([]);
-  const [balance, setBalance] = useState([]);
-
-  // Mock Data Generators
-  useEffect(() => {
-    const interval = setInterval(() => {
-        setStepWidth(prev => [...prev.slice(-19), 50 + Math.random() * 10]); // Keep last 20 points
-        setBalance(prev => [...prev.slice(-19), 90 + Math.random() * 10]);
-    }, 500);
+  export default function AnalysisPage() {
+    const { saveGaitLog, healthForecast, language, t } = useVitality();
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [fallDetected, setFallDetected] = useState(false);
+    const [healthScore, setHealthScore] = useState(null);
+    const [chartData, setChartData] = useState([]);
+    const [permissionError, setPermissionError] = useState(null);
     
-    // Stop "analyzing" phase after 5 seconds
-    const timeout = setTimeout(() => {
-        setAnalyzing(false);
-    }, 5000);
+    const router = useRouter();
+    const analyzerRef = useRef(null);
+    const startTimeRef = useRef(0);
 
+    const handleFall = () => {
+      setFallDetected(true);
+      toast.error(t('fall_alert') || '낙상이 감지되었습니다!', { duration: 5000 });
+      if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
+    };
+
+    const handleAnalysisUpdate = (data) => {
+      setHealthScore(data.stabilityScore);
+      setChartData(prev => [...prev.slice(-19), { 
+        time: new Date().toLocaleTimeString(), 
+        ax: data.raw?.ax || 0,
+        ay: data.raw?.ay || 0,
+        az: data.raw?.az || 0
+      }]);
+    };
+
+    const toggleAnalysis = async () => {
+      if (isAnalyzing) {
+        analyzerRef.current?.stop();
+        setIsAnalyzing(false);
+        
+        if (healthScore !== null) {
+            const duration = (Date.now() - startTimeRef.current) / 1000;
+            await saveGaitLog({
+                healthScore,
+                duration,
+                avgStability: healthScore,
+                fallDetected
+            });
+            toast.success(t('save_success') || '보행 분석 완료!');
+        }
+        return;
+      }
+
+      try {
+        if (!analyzerRef.current) {
+          analyzerRef.current = new GaitAnalyzer({
+            onFallDetected: handleFall,
+            onAnalysisUpdate: handleAnalysisUpdate
+          });
+        }
+        await analyzerRef.current.start();
+        setIsAnalyzing(true);
+        startTimeRef.current = Date.now();
+        setPermissionError(null);
+      } catch (err) {
+        setPermissionError(t('permission_error') || '센서 권한이 필요합니다.');
+      }
+    };
+
+  useEffect(() => {
     return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
+      analyzerRef.current?.stop();
     };
   }, []);
 
   return (
-    <main className="page-content bg-gray-50 min-h-screen">
-       <header className="flex items-center gap-4 mb-6 p-4 bg-white shadow-sm sticky top-0 z-10">
-           <button onClick={() => router.back()} className="text-2xl">←</button>
-           <h1 className="text-xl font-bold">실시간 보행 분석</h1>
-       </header>
+    <div className="page-container">
+      <div className="content-wrapper pb-24">
+        <header className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">{t('health_title')}</h1>
+          <div className="flex gap-2">
+            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full uppercase font-bold">
+              {language}
+            </span>
+            <button onClick={() => router.back()} className="text-gray-500">✕</button>
+          </div>
+        </header>
 
-       <div className="px-4 pb-8 space-y-6">
-           {/* 1. Live Camera View (Simulated) */}
-           <section className="relative rounded-3xl overflow-hidden shadow-lg aspect-[4/3] bg-black">
-                <img 
-                    src="https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                    alt="Walking Feet" 
-                    className="opacity-60 object-cover w-full h-full"
-                />
-                
-                {/* Skeleton Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-1/2 h-2/3 border-4 border-green-400 rounded-lg animate-pulse relative">
-                        <div className="absolute top-0 left-0 w-full h-0.5 bg-green-500 animate-[scan_2s_linear_infinite]"></div>
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/60 text-green-400 px-3 py-1 rounded-full text-xs font-mono">
-                            AI TRACKING ACTIVE
-                        </div>
-                    </div>
-                </div>
-
-                {/* Live Metrics Overlay */}
-                <div className="absolute bottom-4 left-4 right-4 flex gap-2">
-                    <div className="flex-1 bg-black/70 backdrop-blur rounded-xl p-3 text-white text-center">
-                        <p className="text-xs text-gray-400">평균 속도</p>
-                        <p className="text-xl font-bold font-mono">3.2 <span className="text-sm">km/h</span></p>
-                    </div>
-                    <div className="flex-1 bg-black/70 backdrop-blur rounded-xl p-3 text-white text-center">
-                        <p className="text-xs text-gray-400">분당 걸음</p>
-                        <p className="text-xl font-bold font-mono">98 <span className="text-sm">spm</span></p>
-                    </div>
-                </div>
-           </section>
-
-           {/* 2. Analysis Graphs */}
-           <section className="bg-white rounded-2xl p-5 shadow-sm">
-                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <span>📉</span> 보행 패턴 그래프
+        {/* [NEW] AI 건강 컨시어지 예측 카드 */}
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 text-white mb-6 shadow-xl relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <span>{t('health_forecast')}</span>
+                  <span className="bg-white/20 text-[10px] px-2 py-0.5 rounded-full uppercase">AI Future</span>
                 </h3>
-                
-                <div className="mb-4">
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>좌우 균형 (Balance)</span>
-                        <span className="text-green-600 font-bold">정상 범위</span>
-                    </div>
-                    <div className="h-16 bg-gray-50 border border-gray-100 rounded-lg flex items-end overflow-hidden px-1 gap-0.5">
-                        {balance.map((val, i) => (
-                            <div key={i} className="flex-1 bg-green-400 rounded-t-sm transition-all duration-300" style={{ height: `${val - 80}%` }}></div>
-                        ))}
-                    </div>
-                </div>
+                <p className="text-xs opacity-80 mt-1">{t('forecast_msg')}</p>
+              </div>
+              <div className="text-right">
+                 <div className="text-3xl font-black">{healthForecast.expectedScore}</div>
+                 <div className="text-[10px] opacity-70 uppercase">Vit. Score</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mt-6 bg-white/10 p-4 rounded-2xl backdrop-blur-md">
+              <div className="border-r border-white/20">
+                <div className="text-[10px] opacity-70 uppercase mb-1">{t('health_age')}</div>
+                <div className="text-2xl font-bold">{healthForecast.predictedAge} <span className="text-xs font-normal">세</span></div>
+              </div>
+              <div className="pl-2">
+                <div className="text-[10px] opacity-70 uppercase mb-1">{t('expected_score')}</div>
+                <div className="text-2xl font-bold">{healthForecast.expectedScore} <span className="text-xs font-normal">점</span></div>
+              </div>
+            </div>
+            
+            <p className="mt-4 text-xs bg-black/20 p-3 rounded-xl border border-white/10 italic">
+              " {healthForecast.advice} "
+            </p>
+          </div>
+          {/* Decorative elements */}
+          <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-[-40px] left-[-40px] w-56 h-56 bg-indigo-400/20 rounded-full blur-3xl"></div>
+        </div>
 
-                <div>
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>보폭 일정성 (Regularity)</span>
-                        <span className="text-gold-600 font-bold">약간 불규칙</span>
-                    </div>
-                    <div className="h-16 bg-gray-50 border border-gray-100 rounded-lg flex items-end overflow-hidden px-1 gap-0.5">
-                        {stepWidth.map((val, i) => (
-                            <div key={i} className="flex-1 bg-gold-400 rounded-t-sm transition-all duration-300" style={{ height: `${val - 40}%` }}></div>
-                        ))}
-                    </div>
-                </div>
-           </section>
+        {/* 실시간 상태 카드 */}
+        <div className={`card mb-6 text-center shadow-lg transition-all ${fallDetected ? 'bg-red-50 border-red-500 border-2' : 'bg-white'}`}>
+           <p className="text-xs text-gray-400 mb-1 uppercase tracking-widest font-bold">Stability</p>
+           <div className="text-6xl font-black text-primary mb-2 tabular-nums">
+             {healthScore !== null ? healthScore : '--'}
+           </div>
+           <p className="text-sm font-medium text-gray-500">
+             {isAnalyzing ? (language === 'ko' ? '분석 중...' : 'Analyzing...') : (language === 'ko' ? '검사 대기' : 'Wait')}
+           </p>
+        </div>
 
-           {/* 3. AI Diagnosis Result */}
-           {!analyzing && (
-               <section className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-5 animate-scale-up">
-                    <div className="flex items-start gap-4">
-                        <div className="bg-white p-2 rounded-full text-3xl shadow-sm">👨‍⚕️</div>
-                        <div>
-                            <h3 className="font-bold text-green-800 text-lg mb-1">건강한 걸음걸이입니다!</h3>
-                            <p className="text-sm text-green-700 leading-relaxed">
-                                지난달보다 보폭이 2cm 넓어졌어요. 하체 근력이 좋아지고 있다는 신호입니다. 지금처럼 꾸준히 걸어주세요!
-                            </p>
-                            <div className="mt-3 flex gap-2">
-                                <span className="bg-white text-green-600 text-xs px-2 py-1 rounded border border-green-200">#관절튼튼</span>
-                                <span className="bg-white text-green-600 text-xs px-2 py-1 rounded border border-green-200">#낙상위험_낮음</span>
-                            </div>
-                        </div>
-                    </div>
-               </section>
-           )}
-       </div>
-    </main>
+        {/* 제어 버튼 */}
+        <div className="space-y-4">
+          <button 
+            onClick={toggleAnalysis}
+            className={`w-full py-5 rounded-3xl text-xl font-black shadow-xl transition-all active:scale-95 ${
+              isAnalyzing 
+                ? 'bg-gray-100 text-gray-400' 
+                : 'bg-primary text-white'
+            }`}
+          >
+            {isAnalyzing ? (language === 'ko' ? '중단' : 'STOP') : (language === 'ko' ? '검사 시작' : 'START')}
+          </button>
+          
+          <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
+            <h4 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-primary rounded-full"></span>
+              {language === 'ko' ? '사용 가이드' : 'User Guide'}
+            </h4>
+            <ul className="text-sm text-gray-500 space-y-2">
+              <li>• {language === 'ko' ? '평평한 곳에서 일정한 속도로 걸어주세요.' : 'Walk at a steady pace on a flat surface.'}</li>
+              <li>• {language === 'ko' ? '낙상 감지 시 자동으로 보호자에게 알림이 전송됩니다.' : 'Guardians are notified automatically if a fall is detected.'}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

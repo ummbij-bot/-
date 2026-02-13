@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVitality } from '../context/VitalityContext';
-import BottomBar from '../components/BottomBar';
 
 export default function InsurancePage() {
   const { user, language, points, steps } = useVitality();
@@ -77,7 +76,6 @@ export default function InsurancePage() {
         </div>
       </section>
 
-      <BottomBar />
     </main>
   );
 }

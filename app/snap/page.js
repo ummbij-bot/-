@@ -2,39 +2,48 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useVitality } from '../context/VitalityContext';
 import Icon from '../components/Icon';
-import BottomBar from '../components/BottomBar';
+import { toast } from 'react-hot-toast';
 
 export default function FamilySnapPage() {
   const router = useRouter();
+  const { user, saveSnapLog } = useVitality();
   const fileInputRef = useRef(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
 
-  // Mock "Vision AI" Analysis
-  const analyzePhoto = () => {
+  // Advanced "Vision AI" Analysis Simulation
+  const analyzePhoto = async (imageUrl) => {
     setAnalyzing(true);
     
-    // Simulate API delay
-    setTimeout(() => {
-      setAnalyzing(false);
-      setResult({
-        vitalityScore: 92,
-        emotion: 'Happy',
-        aiComment: "할머니! 오늘 표정이 너무 밝으세요. 10년은 젊어 보이시는걸요? 사랑해요! ❤️"
-      });
-      
-      // Save to history (Mock)
-      const history = JSON.parse(localStorage.getItem('snapHistory') || '[]');
-      history.unshift({
-        date: new Date().toISOString(),
-        score: 92,
-        comment: "할머니! 오늘 표정이 너무 밝으세요..."
-      });
-      localStorage.setItem('snapHistory', JSON.stringify(history));
+    // Simulate complex AI calculation
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-    }, 2500); // 2.5s delay for realistic "AI thinking" feel
+    const analysisResult = {
+      vitalityScore: 94,
+      emotion: '매우 행복함',
+      metrics: {
+        smile: 98,
+        eyeBrightness: 85,
+        activityLevel: 90
+      },
+      aiComment: `${user?.displayName?.split(' ')[0] || '어르신'}님! 오늘 입꼬리가 98%나 올라가셨네요. AI 손주가 보기에도 정말 행복해 보이세요! 이 기쁜 소식을 가족들에게 바로 알려드릴게요. 💖`,
+      imageUrl: imageUrl
+    };
+
+    setAnalyzing(false);
+    setResult(analysisResult);
+    
+    // [Phase 6.0] Save to Cloud
+    try {
+      await saveSnapLog(analysisResult);
+      toast.success('📸 활력 분석 리포트가 가족에게 전달되었습니다!');
+    } catch (error) {
+      console.error('Failed to save snap log:', error);
+      toast.error('리포트 전송에 실패했습니다.');
+    }
   };
 
   const handleFileChange = (e) => {
@@ -102,34 +111,68 @@ export default function FamilySnapPage() {
 
             {/* Result Overlay */}
             {!analyzing && result && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-6 pb-24 pt-20 animate-slide-up">
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-center shadow-xl">
-                    <div className="inline-block bg-yellow-400 text-black font-black px-3 py-1 rounded-full text-sm mb-3">
-                        VITALITY SCORE
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/90 to-transparent p-6 pb-24 pt-20 animate-slide-up">
+                <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl overflow-hidden relative">
+                    {/* Decorative Background Glow */}
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/20 rounded-full blur-3xl"></div>
+                    
+                    <div className="flex justify-center mb-4">
+                        <div className="bg-orange-500 text-white font-black px-4 py-1.5 rounded-full text-xs tracking-widest shadow-lg shadow-orange-500/40">
+                            VITALITY REPORT
+                        </div>
                     </div>
-                    <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-1">
-                        {result.vitalityScore}점
+
+                    <div className="flex items-center justify-center gap-2 mb-6">
+                        <span className="text-7xl font-black text-white">{result.vitalityScore}</span>
+                        <span className="text-2xl font-bold text-orange-400">점</span>
                     </div>
-                    <div className="h-px w-full bg-white/20 my-4"></div>
-                    <div className="flex gap-3 items-start text-left">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 border-2 border-white">
+
+                    {/* Detailed Metrics Grid */}
+                    <div className="grid grid-cols-3 gap-3 mb-6">
+                        <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                            <div className="text-[10px] text-gray-400 mb-1 uppercase font-bold text-center">미소</div>
+                            <div className="text-xl font-bold text-center text-white">{result.metrics.smile}%</div>
+                        </div>
+                        <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                            <div className="text-[10px] text-gray-400 mb-1 uppercase font-bold text-center">생기</div>
+                            <div className="text-xl font-bold text-center text-white">{result.metrics.eyeBrightness}%</div>
+                        </div>
+                        <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                            <div className="text-[10px] text-gray-400 mb-1 uppercase font-bold text-center">활동</div>
+                            <div className="text-xl font-bold text-center text-white">{result.metrics.activityLevel}%</div>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4 items-start text-left bg-white/5 p-4 rounded-2xl border border-white/10">
+                        <div className="w-12 h-12 rounded-full bg-white overflow-hidden flex-shrink-0 border-2 border-orange-200">
                              <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=100&q=80" alt="Grandchild" />
                         </div>
-                        <div>
-                            <p className="text-xs text-gray-300 mb-1">손녀님의 AI 메시지</p>
-                            <p className="text-lg font-medium leading-snug">"{result.aiComment}"</p>
+                        <div className="flex-1">
+                            <p className="text-[11px] text-orange-400 font-bold mb-1">AI 손주의 응원 메시지</p>
+                            <p className="text-base font-medium leading-relaxed text-gray-100 italic">"{result.aiComment}"</p>
                         </div>
                     </div>
                     
-                    <button 
-                        onClick={() => {
-                            setImagePreview(null);
-                            setResult(null);
-                        }}
-                        className="mt-6 w-full py-3 bg-white text-black font-bold rounded-xl active:scale-95 transition-transform"
-                    >
-                        다음에도 찍을게요!
-                    </button>
+                    <div className="grid grid-cols-2 gap-3 mt-6">
+                        <button 
+                            onClick={async () => {
+                                // Share Result logic (Phase 9 placeholder)
+                                toast.success('가족 단톡방에 자랑했습니다! 😊');
+                            }}
+                            className="py-4 bg-orange-500 text-white font-bold rounded-2xl active:scale-95 transition-transform flex-center gap-2"
+                        >
+                            <Icon name="Share2" size={18} /> 자랑하기
+                        </button>
+                        <button 
+                            onClick={() => {
+                                setImagePreview(null);
+                                setResult(null);
+                            }}
+                            className="py-4 bg-white/10 text-white font-bold rounded-2xl border border-white/20 active:scale-95 transition-transform"
+                        >
+                            닫기
+                        </button>
+                    </div>
                 </div>
               </div>
             )}
@@ -137,7 +180,6 @@ export default function FamilySnapPage() {
         )}
       </div>
 
-      <BottomBar />
     </main>
   );
 }

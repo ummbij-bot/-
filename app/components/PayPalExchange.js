@@ -66,6 +66,56 @@ export default function PayPalExchange({ onClose, onConvert }) {
             </div>
         )}
 
+        {/* [Phase 4.0] Business Settlement Section */}
+        {/* This section is added as a separate, independent block. */}
+        <section className="mb-8">
+          <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              {/* Assuming Icon component is available or needs to be imported/defined */}
+              {/* <Icon name="CreditCard" size={20} color="var(--primary)" /> */} {/* Placeholder for Icon */}
+              소상공인 정산 센터 (Business)
+          </h3>
+          <div className="card p-5 bg-gradient-to-br from-slate-800 to-slate-900 text-white border-none shadow-xl">
+             <div className="flex-between mb-4">
+                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">이번 주 정산 예정 금액</span>
+                <div className="px-2 py-1 bg-green-500/20 text-green-400 rounded-md text-[10px] font-bold">승인 완료</div>
+             </div>
+             <div className="text-3xl font-black mb-6">$1,240.00 <span className="text-sm font-normal text-slate-500">USD</span></div>
+             
+             <div className="space-y-3 mb-6">
+                <div className="flex-between text-xs">
+                   <span className="text-slate-500">사용된 쿠폰 (82개)</span>
+                   <span className="font-bold">+$820.00</span>
+                </div>
+                <div className="flex-between text-xs">
+                   <span className="text-slate-500">방문 리워드 정산</span>
+                   <span className="font-bold">+$420.00</span>
+                </div>
+                <div className="border-t border-slate-700 pt-3 flex-between text-xs">
+                   <span className="text-white font-bold">최종 정산액</span>
+                   <span className="text-blue-400 font-black">$1,240.00</span>
+                </div>
+             </div>
+
+             <button 
+               onClick={() => window.open('https://www.paypal.com/mep/dashboard', '_blank')}
+               className="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-sm transition-all flex-center gap-2"
+             >
+               {/* <Icon name="ExternalLink" size={16} /> */} {/* Placeholder for Icon */}
+               PayPal 비즈니스 센터로 받기
+             </button>
+          </div>
+        </section>
+
+        {/* Note: The <style jsx> block is not standard React/Next.js JSX.
+            If using Next.js, consider using styled-jsx or global CSS.
+            For this change, it's placed as a comment to avoid syntax errors.
+        */}
+        {/* <style jsx>{`
+          .bg-indigo-50 { background-color: #eef2ff; }
+          .text-indigo-600 { color: #4f46e5; }
+          .border-blue-200 { border-color: #bfdbfe; }
+        `}</style> */}
+
         {/* Step 2: Processing */}
         {step === 'converting' && (
             <div className="p-10 text-center">

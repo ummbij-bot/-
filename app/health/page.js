@@ -1,7 +1,6 @@
 'use client';
 
 import { useVitality } from '../context/VitalityContext';
-import BottomBar from '../components/BottomBar';
 import Icon from '../components/Icon';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -37,9 +36,9 @@ export default function HealthReport() {
 
   return (
     <main className="page-content" style={{ paddingBottom: '100px' }}>
-      <header className="mb-lg pt-2">
-        <h1 className="h1 mb-1">{t('health_title')}</h1>
-        <p className="text-body text-sm text-secondary">
+      <header className="mb-10 pt-4">
+        <h1 className="text-3xl font-black text-gray-900 mb-2">{t('health_title')}</h1>
+        <p className="text-xl font-bold text-gray-500">
           {user?.displayName?.split(' ')[0] || '어르신'}{t('health_subtitle')}
         </p>
       </header>
@@ -47,48 +46,48 @@ export default function HealthReport() {
       {/* Primary Stat Card */}
       <section className="card mb-lg relative overflow-hidden bg-white">
         <div className="flex justify-between items-start">
-           <div>
-              <div className="flex items-center gap-2 mb-2">
-                 <div className="p-2 bg-orange-50 rounded-full">
-                    <Icon name="Activity" size={20} color="var(--primary)" />
-                 </div>
-                 <span className="font-bold text-gray-900">이번주 활력 지수</span>
-              </div>
-              <div className="flex items-baseline gap-1 mt-2">
-                 <span className="text-4xl font-extrabold text-primary">top 12%</span>
-              </div>
-              <p className="text-xs text-secondary mt-1">또래보다 건강해요!</p>
-           </div>
+            <div className="flex-1">
+               <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-orange-100 rounded-2xl shadow-sm">
+                     <Icon name="Activity" size={28} color="var(--primary)" />
+                  </div>
+                  <span className="text-xl font-black text-gray-900">이번주 활력 지수</span>
+               </div>
+               <div className="flex items-baseline gap-2 mt-4">
+                  <span className="text-5xl font-black text-orange-600">상위 12%</span>
+               </div>
+               <p className="text-lg text-gray-500 font-bold mt-2 italic shadow-orange-100">또래보다 훨씬 건강하세요! 👍</p>
+            </div>
            
            {/* Mini Stat Grid */}
-           <div className="flex flex-col gap-3 text-right">
-              <div>
-                 <span className="text-xs text-secondary block">총 이동</span>
-                 <span className="font-bold text-gray-900">1.8 km</span>
-              </div>
-              <div>
-                 <span className="text-xs text-secondary block">칼로리</span>
-                 <span className="font-bold text-gray-900">320 kcal</span>
-              </div>
-           </div>
+            <div className="flex flex-col gap-4 text-right justify-center">
+               <div>
+                  <span className="text-sm text-gray-400 block font-black mb-1">총 이동 거리</span>
+                  <span className="text-2xl font-black text-gray-900 leading-none">1.8 <span className="text-sm">km</span></span>
+               </div>
+               <div>
+                  <span className="text-sm text-gray-400 block font-black mb-1">소모 칼로리</span>
+                  <span className="text-2xl font-black text-gray-900 leading-none">320 <span className="text-sm">kcal</span></span>
+               </div>
+            </div>
         </div>
       </section>
 
       {/* Weekly Chart (Clean Bars) */}
       <section className="card mb-lg">
-        <div className="flex-between mb-md">
-           <h2 className="text-lg font-bold text-gray-900">주간 걸음</h2>
-           <span className="text-xs text-secondary">최근 7일</span>
+        <div className="flex-between mb-8">
+           <h2 className="text-2xl font-black text-gray-900">주간 걸음 기록</h2>
+           <span className="text-sm font-bold text-gray-400">최근 7일</span>
         </div>
-        <div className="flex justify-between items-end h-32 pt-4">
+        <div className="flex justify-between items-end h-40 pt-6 px-2">
            {weeklySteps.map((d, i) => (
-              <div key={i} className="flex flex-col items-center gap-2 flex-1 group">
+              <div key={i} className="flex flex-col items-center gap-3 flex-1 group">
                  <div 
-                    className={`w-3 rounded-full transition-all duration-500 ${d.active ? 'bg-orange-500' : 'bg-gray-200'}`}
+                    className={`w-6 rounded-full transition-all duration-500 shadow-sm ${d.active ? 'bg-orange-600' : 'bg-gray-200'}`}
                     style={{ height: `${(d.steps / maxSteps) * 100}%` }}
                  />
-                 <span className={`text-xs ${d.active ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
-                    {d.day.charAt(0)}
+                 <span className={`text-sm font-black ${d.active ? 'text-orange-600' : 'text-gray-400'}`}>
+                    {d.day === 'Sun' ? '일' : d.day === 'Mon' ? '월' : d.day === 'Tue' ? '화' : d.day === 'Wed' ? '수' : d.day === 'Thu' ? '목' : d.day === 'Fri' ? '금' : '토'}
                  </span>
               </div>
            ))}
@@ -136,13 +135,13 @@ export default function HealthReport() {
          </div>
          
          {vitalityHistory.length > 0 ? (
-             <div className="bg-white/80 p-4 rounded-xl border border-yellow-200">
-                 <div className="flex justify-between items-end mb-2">
-                     <span className="text-sm text-gray-500">{new Date(vitalityHistory[0].date).toLocaleDateString()}</span>
-                     <span className="text-2xl font-black text-primary">{vitalityHistory[0].score}점</span>
-                 </div>
-                 <p className="text-sm text-gray-800 font-medium">"{vitalityHistory[0].comment}"</p>
-             </div>
+              <div className="bg-white p-5 rounded-2xl border-2 border-orange-100 shadow-sm">
+                  <div className="flex justify-between items-center mb-4">
+                      <span className="text-md text-gray-400 font-black">{new Date(vitalityHistory[0].date).toLocaleDateString()} 산책 기록</span>
+                      <span className="text-3xl font-black text-orange-600">{vitalityHistory[0].score}점</span>
+                  </div>
+                  <p className="text-xl text-gray-800 font-bold leading-relaxed bg-orange-50/50 p-4 rounded-xl border border-orange-100/50">" {vitalityHistory[0].comment} "</p>
+              </div>
          ) : (
              <div className="text-center py-6 text-gray-400 text-sm">
                  <p>아직 분석 기록이 없어요.</p>
@@ -152,12 +151,11 @@ export default function HealthReport() {
       </section>
 
       {/* Share Action */}
-      <button className="w-full py-4 border border-gray-200 rounded-2xl flex-center gap-2 text-gray-600 font-bold bg-white active:bg-gray-50">
-         <Icon name="Share" size={20} />
-         가족에게 건강 리포트 공유
+      <button className="w-full py-6 bg-white border-4 border-gray-100 rounded-3xl flex-center gap-4 text-gray-700 font-black text-xl shadow-xl active:scale-95 transition-all mb-8">
+         <Icon name="Share2" size={28} className="text-orange-600" />
+         자녀에게 건강 리포트 보내기
       </button>
 
-      <BottomBar />
     </main>
   );
 }

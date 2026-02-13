@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useVitality } from '../context/VitalityContext';
 import { useDevice } from '../context/DeviceContext';
 import { useAccessibility } from '../context/AccessibilityContext';
-import BottomBar from '../components/BottomBar';
 
 export default function DevicePage() {
   const { language } = useVitality();
@@ -139,7 +138,6 @@ export default function DevicePage() {
         </div>
       </section>
 
-      <BottomBar />
     </main>
   );
 }

@@ -45,6 +45,10 @@ export const metadata = {
   themeColor: "#FF6B00",
 };
 
+import AdaptiveContainer from "./components/AdaptiveContainer";
+import VoiceAssistant from "./components/VoiceAssistant";
+import BottomBar from "./components/BottomBar"; // Import added
+
 export default function RootLayout({ children }) {
   return (
     <html lang="ko" className={notoSansKr.variable}>
@@ -63,10 +67,15 @@ export default function RootLayout({ children }) {
                       fontSize: '16px',
                       borderRadius: '50px',
                       padding: '16px 24px',
+                      zIndex: 9999,
                     }
                   }} 
                 />
-                {children}
+                <AdaptiveContainer>
+                  {children}
+                </AdaptiveContainer>
+                <VoiceAssistant />
+                <BottomBar /> {/* Globally integrated */}
               </div>
             </VitalityProvider>
           </DeviceProvider>

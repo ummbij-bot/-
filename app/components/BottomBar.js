@@ -9,22 +9,20 @@ export default function BottomBar() {
 
   const tabs = [
     { id: 'home', name: '홈', icon: 'Home', href: '/' },
-    { id: 'map', name: '지도', icon: 'Map', href: '/map' }, // Updated to 'Map' which Lucide has
+    { id: 'map', name: '지도', icon: 'Map', href: '/map' },
+    { id: 'community', name: '커뮤니티', icon: 'Users', href: '/community' }, // Newly added
     { id: 'shop', name: '상점', icon: 'ShoppingBag', href: '/shop' },
     { id: 'profile', name: 'MY', icon: 'User', href: '/profile' },
   ];
 
   return (
     <nav 
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full bg-white border-t border-gray-100 z-50"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full bg-white border-t border-gray-100 z-50 flex items-center justify-around"
       style={{
         maxWidth: '430px',
-        height: '64px',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        padding: '8px 0'
+        height: '72px', // Slightly taller for better touch targets
+        padding: '0 8px 12px 8px', // Additional bottom padding for modern iOS-like look
+        boxShadow: '0 -4px 16px rgba(0,0,0,0.04)'
       }}
     >
       {tabs.map((tab) => {
@@ -34,30 +32,24 @@ export default function BottomBar() {
           <Link 
             key={tab.id} 
             href={tab.href} 
+            className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all active:scale-90"
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              flex: '1',
-              height: '100%',
-              transition: 'transform 0.2s'
+              opacity: isActive ? 1 : 0.6,
             }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            <Icon 
-                name={tab.icon} 
-                size={24} 
-                color={isActive ? 'var(--primary)' : 'var(--text-tertiary)'} 
-                strokeWidth={isActive ? 2.5 : 2}
-            />
+            <div className={`p-1.5 rounded-2xl transition-colors ${isActive ? 'bg-orange-50' : 'bg-transparent'}`}>
+              <Icon 
+                  name={tab.icon} 
+                  size={isActive ? 26 : 24} 
+                  color={isActive ? 'var(--primary)' : '#8B95A1'} 
+                  strokeWidth={isActive ? 2.5 : 2}
+              />
+            </div>
             <span style={{ 
-                fontSize: '11px', 
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'var(--primary)' : 'var(--text-tertiary)'
+                fontSize: '10px', 
+                fontWeight: isActive ? 700 : 500,
+                color: isActive ? 'var(--primary)' : '#8B95A1',
+                marginTop: '-2px'
             }}>
                 {tab.name}
             </span>

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVitality } from '../context/VitalityContext';
-import BottomBar from '../components/BottomBar';
 
 export default function QuizPage() {
   const { user, loading, language, t, addPoints, triggerHaptic } = useVitality();
@@ -102,7 +101,6 @@ export default function QuizPage() {
         </div>
       )}
 
-      <BottomBar />
     </main>
   );
 }

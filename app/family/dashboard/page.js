@@ -1,26 +1,35 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useVitality } from '../../context/VitalityContext';
+import { toast } from 'react-hot-toast';
 
 export default function GuardianDashboard() {
   const router = useRouter();
+  const { user, familyMessages, sendFamilyMessage, steps, goal } = useVitality();
   
-  // Mock Data
-  const parentName = "김영희";
+  // Mock Data for Profile (Parent)
+  const parentName = user?.displayName || "어르신";
   const stats = {
-      steps: 8432,
-      goal: 10000,
+      steps: steps,
+      goal: goal,
       emotion: "Happy 😊",
-      lastUpdate: "10분 전"
+      lastUpdate: "방금 전"
   };
 
-  const activityLog = [
-      { time: "09:30", action: "아침 산책 시작 (종묘 공원)" },
-      { time: "10:15", action: "보행 분석 완료 (점수: 85점)" },
-      { time: "12:00", action: "교보약국 방문 (포인트 적립)" },
-      { time: "14:20", action: "기분 체크: 매우 좋음" }
-  ];
+  const activityLog = familyMessages.map(msg => ({
+      time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      action: msg.content
+  }));
+
+  const handleSendCheer = async () => {
+    const success = await sendFamilyMessage('오늘도 활기차게 걸어보세요! 화이팅! 💖');
+    if (success) {
+      toast.success('부모님께 응원 메시지를 보냈습니다! 💌');
+    } else {
+      toast.error('메시지 전송에 실패했습니다.');
+    }
+  };
 
   return (
     <main className="min-h-screen bg-indigo-50 pb-20">
@@ -47,7 +56,10 @@ export default function GuardianDashboard() {
             <div className="flex justify-between items-end mb-4">
                 <div>
                     <h3 className="text-gray-500 text-sm font-bold">오늘의 활력 점수</h3>
-                    <div className="text-4xl font-black text-indigo-900">85<span className="text-lg text-gray-400">/100</span></div>
+                    <div className="text-4xl font-black text-indigo-900">
+                      {Math.min(100, Math.floor((stats.steps / stats.goal) * 100)) || 0}
+                      <span className="text-lg text-gray-400">/100</span>
+                    </div>
                 </div>
                 <div className="text-right">
                     <div className="text-sm text-gray-500">기분 상태</div>
@@ -57,9 +69,12 @@ export default function GuardianDashboard() {
             
             {/* Progress Bar */}
             <div className="w-full bg-gray-100 rounded-full h-4 mb-2">
-                <div className="bg-gradient-to-r from-indigo-400 to-purple-500 h-4 rounded-full" style={{ width: '85%' }} />
+                <div 
+                  className="bg-gradient-to-r from-indigo-400 to-purple-500 h-4 rounded-full transition-all duration-1000" 
+                  style={{ width: `${Math.min(100, (stats.steps / stats.goal) * 100)}%` }} 
+                />
             </div>
-            <p className="text-xs text-center text-gray-500">목표 걸음 {stats.goal}보 중 <span className="text-indigo-600 font-bold">{stats.steps}보</span> 달성</p>
+            <p className="text-xs text-center text-gray-500">목표 걸음 {stats.goal.toLocaleString()}보 중 <span className="text-indigo-600 font-bold">{stats.steps.toLocaleString()}보</span> 달성</p>
         </section>
 
         {/* Real-time Activity Log */}
@@ -81,14 +96,14 @@ export default function GuardianDashboard() {
         {/* Actions */}
         <section className="grid grid-cols-2 gap-3">
             <button 
-                onClick={() => alert('부모님께 응원 메시지를 보냈습니다! 💌')}
+                onClick={handleSendCheer}
                 className="bg-white p-4 rounded-xl shadow-sm text-center border border-indigo-100 hover:bg-indigo-50 transition-colors"
             >
                 <div className="text-2xl mb-1">🥰</div>
                 <div className="text-sm font-bold text-indigo-900">응원 보내기</div>
             </button>
             <button 
-                onClick={() => alert('커피 쿠폰을 선물했습니다! ☕️')}
+                onClick={() => toast.success('커피 쿠폰을 선물했습니다! ☕️')}
                 className="bg-white p-4 rounded-xl shadow-sm text-center border border-indigo-100 hover:bg-indigo-50 transition-colors"
             >
                 <div className="text-2xl mb-1">🎁</div>

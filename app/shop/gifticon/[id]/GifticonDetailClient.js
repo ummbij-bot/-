@@ -6,9 +6,13 @@ import Link from 'next/link';
 import Icon from '../../../components/Icon';
 import { gifticons } from '../../../data/gifticons';
 import toast from 'react-hot-toast';
+import { useVitality } from '../../../context/VitalityContext';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../../../lib/firebase';
 
 export default function GifticonDetailClient({ params }) {
   const router = useRouter();
+  const { user, points, addPoints } = useVitality(); // 실제 포인트!
   const [item, setItem] = useState(null);
   const [status, setStatus] = useState('detail'); // detail, processing, complete
   const [barcode, setBarcode] = useState('');
@@ -24,10 +28,15 @@ export default function GifticonDetailClient({ params }) {
     }
   }, [params]);
 
-  const handlePurchase = () => {
-    // 1. Check points (Mock)
-    const userPoints = 3450;
-    if (item.price > userPoints) {
+  const handlePurchase = async () => {
+    if (!user) {
+      toast.error('로그인이 필요합니다!');
+      router.push('/start');
+      return;
+    }
+
+    // 1. Check points (Real!)
+    if (item.price > points) {
         toast.error('포인트가 부족해요! 조금만 더 걸어보세요 💪');
         return;
     }
@@ -35,12 +44,30 @@ export default function GifticonDetailClient({ params }) {
     // 2. Process
     setStatus('processing');
     
-    // 3. Simulate API Call
-    setTimeout(() => {
-        setStatus('complete');
-        setBarcode('1234-5678-9012'); // Mock Barcode
-        toast.success(`'${item.name}' 교환 완료!`, { duration: 3000 });
-    }, 2000);
+    try {
+      // 3. 포인트 차감
+      await addPoints(-item.price);
+      
+      // 4. 쿠폰 발급 (Firestore에 저장)
+      const couponCode = Math.random().toString(36).substring(2, 14).toUpperCase();
+      await addDoc(collection(db, 'coupons'), {
+        userId: user.uid,
+        itemId: item.id,
+        itemName: item.name,
+        price: item.price,
+        code: couponCode,
+        usedAt: null,
+        createdAt: new Date().toISOString()
+      });
+      
+      setStatus('complete');
+      setBarcode(couponCode);
+      toast.success(`'${item.name}' 교환 완료!`, { duration: 3000 });
+    } catch (error) {
+      console.error('❌ Coupon purchase failed:', error);
+      toast.error('쿠폰 교환에 실패했습니다.');
+      setStatus('detail');
+    }
   };
 
   if (!item) return <div className="min-h-screen flex-center">로딩 중...</div>;
@@ -72,7 +99,7 @@ export default function GifticonDetailClient({ params }) {
                     <div className="mt-auto pt-6 border-t border-gray-100">
                         <div className="flex justify-between items-center mb-4">
                             <span className="text-gray-600">보유 포인트</span>
-                            <span className="font-bold text-gray-900">3,450 P</span>
+                            <span className="font-bold text-gray-900">{points?.toLocaleString() || 0} P</span>
                         </div>
                          <div className="flex justify-between items-center mb-6">
                             <span className="text-gray-600">차감 포인트</span>
