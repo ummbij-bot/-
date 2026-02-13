@@ -171,14 +171,14 @@ export default function ScanPage() {
             <div className="relative z-10">
               <div className="w-64 h-64 border-4 border-white rounded-2xl relative">
                 {/* 코너 마커 */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-orange-500" style={{ borderTopLeftRadius: '12px' }} />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-orange-500" style={{ borderTopRightRadius: '12px' }} />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-orange-500" style={{ borderBottomLeftRadius: '12px' }} />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-orange-500" style={{ borderBottomRightRadius: '12px' }} />
+                <div className="absolute top-0 left-0 w-10 h-10 border-t-8 border-l-8 border-blue-600" style={{ borderTopLeftRadius: '24px' }} />
+                <div className="absolute top-0 right-0 w-10 h-10 border-t-8 border-r-8 border-blue-600" style={{ borderTopRightRadius: '24px' }} />
+                <div className="absolute bottom-0 left-0 w-10 h-10 border-b-8 border-l-8 border-blue-600" style={{ borderBottomLeftRadius: '24px' }} />
+                <div className="absolute bottom-0 right-0 w-10 h-10 border-b-8 border-r-8 border-blue-600" style={{ borderBottomRightRadius: '24px' }} />
                 
                 {/* 스캔 애니메이션 */}
                 {scanning && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500 animate-scan" />
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.8)] animate-scan" />
                 )}
               </div>
             </div>
