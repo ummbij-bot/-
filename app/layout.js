@@ -37,12 +37,12 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "GoldenWalk",
+    title: "Masil",
   },
   formatDetection: {
     telephone: false,
   },
-  themeColor: "#FF6B00",
+  themeColor: "#0066FF",
 };
 
 import AdaptiveContainer from "./components/AdaptiveContainer";

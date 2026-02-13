@@ -20,8 +20,8 @@ export default function BottomBar() {
       className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full bg-white border-t border-gray-100 z-50 flex items-center justify-around"
       style={{
         maxWidth: '430px',
-        height: '72px', // Slightly taller for better touch targets
-        padding: '0 8px 12px 8px', // Additional bottom padding for modern iOS-like look
+        height: 'var(--bottom-bar-height)', // Use the variable from globals.css
+        padding: '0 8px 12px 8px',
         boxShadow: '0 -4px 16px rgba(0,0,0,0.04)'
       }}
     >
@@ -37,7 +37,7 @@ export default function BottomBar() {
               opacity: isActive ? 1 : 0.6,
             }}
           >
-            <div className={`p-1.5 rounded-2xl transition-colors ${isActive ? 'bg-orange-50' : 'bg-transparent'}`}>
+            <div className={`p-1.5 rounded-2xl transition-colors ${isActive ? 'bg-blue-50' : 'bg-transparent'}`}>
               <Icon 
                   name={tab.icon} 
                   size={isActive ? 26 : 24} 

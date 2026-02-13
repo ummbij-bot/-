@@ -1,47 +1,47 @@
 /* ============================================
-   GoldenWalk (마실) — Swiss Style System
-   Theme: Minimal, High-Contrast, Typography-Driven
-   Reference: Toss, Airbnb
+   GoldenWalk (마실) — Masil x TheHam Style
+   Theme: Vibrant Blue, Soft Gradients, Outline Icons
    ============================================ */
 
 :root {
-  /* --- Color Palette: Deep Orange & Charcoal --- */
-  --primary: #FF6B00;       /* Deep Orange - Action, Brand */
-  --primary-light: #FFF0E6; /* Light Orange Background */
+  /* --- Color Palette: Masil Vibrant Blue --- */
+  --primary: #0066FF;       /* Masil Blue - Action, Brand */
+  --primary-light: #E3F2FD; /* Soft Sky Blue Background */
   
-  --text-primary: #000000;   /* AAA contrast for readability */
-  --text-secondary: #4E5968; /* Harder grey for body text (WCAG AAA target) */
-  --text-tertiary: #8B95A1;  /* Visible even with yellowing lens */
+  --text-primary: #191F28;   /* High contrast for readability */
+  --text-secondary: #4E5968; /* Standard body text */
+  --text-tertiary: #8B95A1;  /* Subtle info text */
   --text-white: #FFFFFF;
 
   /* --- Backgrounds & Surfaces --- */
-  --bg-app: #F2F4F6;      /* Toss-like Light Grey Background */
-  --bg-surface: #FFFFFF;  /* Pure White Cards */
-  --bg-overlay: rgba(25, 31, 40, 0.4); /* Dark Dim */
+  --bg-app: #FFFFFF;      /* Clean White Base */
+  --bg-gradient: linear-gradient(180deg, #E3F2FD 0%, #FFFFFF 100%); /* TheHam Aesthetic */
+  --bg-surface: #FFFFFF;  /* Card Surface */
+  --bg-overlay: rgba(25, 31, 40, 0.4);
 
   /* --- Borders & Lines --- */
   --border: #E5E8EB;
   --divider: #F2F4F6;
 
-  /* --- Shadows (Ultra Subtle) --- */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08); /* Lifted */
-  --shadow-floating: 0 8px 24px rgba(0, 0, 0, 0.12);
+  /* --- Shadows (Soft & Friendly) --- */
+  --shadow-sm: 0 4px 12px rgba(0, 102, 255, 0.04);
+  --shadow-md: 0 8px 24px rgba(0, 102, 255, 0.08);
+  --shadow-floating: 0 12px 32px rgba(0, 102, 255, 0.12);
 
   /* --- Layout & Spacing --- */
   --max-width: 430px;
-  --header-height: 60px;
-  --bottom-bar-height: 72px; /* Increased for larger touch targets */
+  --header-height: 64px;
+  --bottom-bar-height: 76px;
   
   --radius-xs: 8px;
   --radius-sm: 12px;
-  --radius-md: 16px;  /* Standard Card */
-  --radius-lg: 24px;  /* Modal/Sheet */
+  --radius-md: 20px;  /* TheHam Rounded Style */
+  --radius-lg: 28px;
   --radius-full: 9999px;
 
   /* --- Typography --- */
   --font-main: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-  --tracking-tight: -0.02em; /* Swiss Style Tight Tracking */
+  --tracking-tight: -0.01em;
 }
 
 /* --- Resets & Base --- */

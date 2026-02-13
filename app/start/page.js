@@ -43,32 +43,29 @@ export default function Onboarding() {
   return (
     <main className="h-screen flex flex-col items-center justify-center p-6 bg-white relative overflow-hidden">
       {/* Abstract Background Element */}
-      <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-orange-100 rounded-full blur-3xl opacity-50" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-gray-100 rounded-full blur-3xl opacity-50" />
+      <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-50" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-gray-50 rounded-full blur-3xl opacity-50" />
 
       <div className="z-10 text-center w-full max-w-sm">
         <div className="w-full max-w-[280px] aspect-square mx-auto mb-8 relative flex-center">
-            <img 
-              src="/images/hero_shoe.png" 
-              alt="Start Walking" 
-              className="w-full h-full object-contain drop-shadow-2xl animate-float-slow" 
-            />
+            <div className="w-48 h-48 bg-blue-600 rounded-[48px] flex-center shadow-2xl animate-float-slow">
+                <span className="text-white font-black text-8xl">마</span>
+            </div>
         </div>
         
         <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tighter">
-          GoldenWalk
-          <span className="block text-2xl text-orange-600 font-black mt-2">마실 (Masil)</span>
+          마실 <span className="text-blue-600">(Masil)</span>
         </h1>
         
         <p className="text-xl font-bold text-gray-600 mb-14 leading-relaxed">
-          동네 마실처럼 가볍게,<br/>
-          건강하고 즐거운 매일을 시작해요
+          동네 산책처럼 가볍게,<br/>
+          건강하고 즐거운 매일을 시작해요 🌞
         </p>
 
         <button 
           onClick={() => handleStart('redirect')}
           disabled={localLoading || loading}
-          className="w-full py-6 bg-orange-600 text-white rounded-3xl font-black text-xl flex items-center justify-center gap-4 transition-all shadow-xl active:scale-95 disabled:opacity-50"
+          className="w-full py-6 bg-blue-600 text-white rounded-[32px] font-black text-xl flex items-center justify-center gap-4 transition-all shadow-xl active:scale-95 disabled:opacity-50"
         >
           {localLoading ? (
             <>
@@ -86,7 +83,7 @@ export default function Onboarding() {
         <button 
           onClick={() => handleStart('anonymous')}
           disabled={localLoading || loading}
-          className="w-full py-5 mt-4 bg-white text-gray-700 border-2 border-gray-200 rounded-3xl font-bold text-lg flex items-center justify-center gap-3 active:bg-gray-50 transition-colors disabled:opacity-50"
+          className="w-full py-5 mt-4 bg-white text-gray-700 border-2 border-gray-200 rounded-[32px] font-bold text-lg flex items-center justify-center gap-3 active:bg-gray-50 transition-colors disabled:opacity-50"
         >
           <Icon name="User" size={20} />
           로그인 없이 구경하기

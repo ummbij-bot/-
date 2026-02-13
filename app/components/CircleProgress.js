@@ -30,7 +30,7 @@ export default function CircleProgress({ current, goal, points, label, size = 20
           style={{ 
             strokeDashoffset, 
             transition: 'stroke-dashoffset 1.0s ease-out',
-            strokeLinecap: 'butt' // Flat ends for Swiss style
+            strokeLinecap: 'round' // Friendly rounded ends
           }}
           fill="transparent"
           r={normalizedRadius}

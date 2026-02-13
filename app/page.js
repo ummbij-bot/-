@@ -79,62 +79,46 @@ export default function Home() {
   return (
     <main className="page-content" style={{ paddingBottom: '100px' }}>
       
-{/* 1. Header: Minimal & Functional */ }
+{/* 1. Header: Masil Branding */ }
 <header className="flex-between mb-lg pt-2">
-    <div>
-        <h1 className="h1">
-            {t('greeting')}, {user?.displayName?.split(' ')[0] || '어르신'}
-        </h1>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-xl">{weatherData.icon}</span>
-          <p className="text-sm font-medium text-gray-700">
-            {weatherData.temp}°C {weatherData.conditionKr}
-          </p>
-          <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-600 rounded-full font-bold">
-            먼지 {weatherData.fineDustStatus}
-          </span>
+    <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex-center shadow-md">
+            <span className="text-white font-black text-2xl">마</span>
+        </div>
+        <div>
+            <h1 className="h1 mb-0" style={{ fontSize: '24px', color: 'var(--primary)' }}>마실 (Masil)</h1>
+            <p className="text-xs font-bold text-blue-400 tracking-widest uppercase">Senior Life</p>
         </div>
     </div>
 
-    <div className="flex-center gap-md">
-        {/* [Phase 5.0] Wearable Sync Indicator */}
-        <button
-            onClick={() => router.push('/wearable')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-full border-2 transition-all active:scale-95 ${
-                wearableStatus?.status === 'connected' 
-                ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' 
-                : 'bg-white border-gray-100 text-gray-400'
-            }`}
-        >
-            <div className={`relative ${wearableStatus?.status === 'connected' ? 'animate-pulse' : ''}`}>
-                <Icon name="Watch" size={20} />
-                {wearableStatus?.status === 'connected' && (
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-white" />
-                )}
-            </div>
-            <span className="text-xs font-black uppercase tracking-tighter">
-                {wearableStatus?.status === 'connected' ? 'Sync' : 'Link'}
-            </span>
-        </button>
-
+    <div className="flex-center gap-sm">
         <button
             onClick={() => setLanguage(language === 'ko' ? 'ja' : 'ko')}
-            className="btn-neutral pressable flex-center"
-            style={{ minWidth: '60px', height: '60px', borderRadius: '30px', fontSize: '16px', fontWeight: '800' }}
-            aria-label={language === 'ko' ? "Switch to Japanese" : "한국어로 변경"}
+            className="btn-neutral pressable flex-center border-blue-100"
+            style={{ minWidth: '50px', height: '50px', borderRadius: '25px', fontSize: '14px', fontWeight: '800' }}
         >
             {language === 'ko' ? 'JP' : 'KR'}
         </button>
         <button
             onClick={() => router.push('/device')}
-            className="flex-center pressable bg-white border border-gray-100"
-            style={{ width: 60, height: 60, borderRadius: '50%' }}
-            aria-label="Settings"
+            className="flex-center pressable bg-white border border-blue-50 shadow-sm"
+            style={{ width: 50, height: 50, borderRadius: '50%' }}
         >
-            <Icon name="Settings" size={28} color="var(--text-primary)" />
+            <Icon name="Settings" size={24} color="var(--primary)" />
         </button>
     </div>
 </header>
+
+<section className="mb-lg rounded-3xl p-6 relative overflow-hidden text-white" style={{ background: 'linear-gradient(135deg, #0066FF 0%, #3B82F6 100%)' }}>
+    <div className="relative z-10">
+        <h2 className="text-2xl font-black mb-1">함께 쓰고 나누자, 마실!</h2>
+        <p className="text-blue-100 font-medium">우리 동네 이웃과 따뜻한 나눔을 시작해요 🤝</p>
+    </div>
+    <div className="absolute right-[-10px] bottom-[-10px] opacity-20">
+        <Icon name="PlusCircle" size={120} color="white" />
+    </div>
+    <div className="absolute right-4 bottom-4 text-5xl">🌞</div>
+</section>
 
 {/* ... (Stat Card remains mostly same, maybe add pressable if clickable) ... */ }
 <section className="card mb-lg relative overflow-hidden">
